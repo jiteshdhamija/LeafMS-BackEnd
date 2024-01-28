@@ -1,1 +1,13 @@
-[{"username":"admin","leaves":[{"startTime":"08/02/2024","endTime":"15/02/2024"}]}]
+[
+  {
+    "username": "admin",
+    "approver": "admin",
+    "leaves": [
+      {
+        "startTime": "08/02/2024",
+        "endTime": "15/02/2024",
+        "approval": false
+      }
+    ]
+  }
+]
