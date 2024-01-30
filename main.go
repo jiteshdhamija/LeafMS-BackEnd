@@ -3,11 +3,10 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"os"
-
-	"github.com/gorilla/mux"
 )
 
 type User struct {
@@ -39,6 +38,7 @@ var usersMap = map[string]User{}
 var leaveMap = map[string][]LeaveSpan{}
 
 func main() {
+	connectDB()
 
 	err := json.Unmarshal(userDatabaseContent, &userDatabase)
 	if err != nil {
