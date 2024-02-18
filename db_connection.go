@@ -24,7 +24,7 @@ func connectDB() *Database {
 	// Use the SetServerAPIOptions() method to set the version of the Stable API on the client
 	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
 	opts := options.Client().ApplyURI(URI).SetServerAPIOptions(serverAPI)
-	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*100000000)
 	// Create a new client and connect to the server
 	client, err := mongo.Connect(ctx, opts)
 	if err != nil {
@@ -78,9 +78,11 @@ func (db Database) find(collectionName string, filter bson.D) ([]User, error) {
 	var result []User
 	collection := db.Database.Collection(collectionName)
 	res, err := collection.Find(db.Context, filter)
-	res.Decode(&result)
 	if err != nil {
-		log.Fatal("Could not find documents. Error:-\n\t", err)
+		log.Panic("The find query did not return a cursor. Error:-\n\t", err)
+	}
+	if err = res.All(db.Context, &result); err != nil {
+		log.Panic("Could not complete the find query in the database. Error:-\n\t", err)
 		return nil, err
 	}
 	return result, nil

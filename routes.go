@@ -40,7 +40,6 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	//Authenticate the user credentials with the database
 	result := validateCred(user)
 	if result == nil {
-		log.Fatal("api fails here", err)
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte("Invalid Credentials!!"))
 		return
