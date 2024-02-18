@@ -1,12 +1,12 @@
 package main
 
 type User struct {
-	Username    string `json:"username" bson:"username"`
-	Password    string `json:"password" bson:"password"`
-	Name        string `json:"name" bson:"name"`
-	Team        string `json:"team" bson:"team"`
-	Designation string `json:"designation" bson:"designation"`
-	Approver    string `json:"approver" bson:"approver"`
+	Username    string `bson:"username"`
+	Password    string `bson:"password"`
+	Name        string `bson:"name"`
+	Team        string `bson:"team"`
+	Designation string `bson:"designation"`
+	Approver    string `bson:"approver"`
 }
 
 type LeaveSpan struct {

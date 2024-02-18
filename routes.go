@@ -12,7 +12,7 @@ import (
 var database = connectDB()
 
 // function to validate the user
-func validateCred(userToAuthorize User) interface {
+func validateCred(userToAuthorize User) []User {
 	user, err := database.find("employees", bson.D{
 		{Key: "username", Value: userToAuthorize.Username},
 		{Key: "password", Value: userToAuthorize.Password}})
@@ -38,15 +38,15 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//Authenticate the user credentials with the database
-	user = validateCred(user)
-	if (user == nil) {
-		log.Fatal(err)
+	result := validateCred(user)
+	if result == nil {
+		log.Fatal("api fails here", err)
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte("Invalid Credentials!!"))
 		return
 	}
 
-	response, _ := json.Marshal(user)
+	response, _ := json.Marshal(result)
 	w.Write(response)
 }
 

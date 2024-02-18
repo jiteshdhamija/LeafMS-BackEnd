@@ -74,8 +74,8 @@ func (db Database) insert(collectionName string, document []interface{}) (*mongo
 	return result, nil
 }
 
-func (db Database) find(collectionName string, filter bson.D) ([]interface{}, error) {
-	var result []interface{}
+func (db Database) find(collectionName string, filter bson.D) ([]User, error) {
+	var result []User
 	collection := db.Database.Collection(collectionName)
 	res, err := collection.Find(db.Context, filter)
 	res.Decode(&result)
