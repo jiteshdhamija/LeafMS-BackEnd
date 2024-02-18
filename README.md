@@ -3,4 +3,4 @@ Leaf_MS is a repository we created for tracking and managing leaves plans for va
 Tracking dates 
 Leave schedule
 Team capacity at any given time
-and somethign else which we haven't pllaned yet.
+and something else which we haven't planned yet.
