@@ -19,8 +19,6 @@ var usersMap = map[string]User{}
 var leaveMap = map[string][]LeaveSpan{}
 
 func main() {
-	connectDB()
-
 	err := json.Unmarshal(userDatabaseContent, &userDatabase)
 	if err != nil {
 		log.Fatal(err)

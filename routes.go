@@ -2,25 +2,31 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
+
+	"go.mongodb.org/mongo-driver/bson"
 )
 
+var database = connectDB()
+
 // function to validate the user
-func validateCred(userList map[string]User, userToAuthorize User) User {
-	user, found := userList[userToAuthorize.Username]
-	if found && user.Password == userToAuthorize.Password {
-		return user
+func validateCred(userToAuthorize User) interface {
+	user, err := database.find("employees", bson.D{
+		{Key: "username", Value: userToAuthorize.Username},
+		{Key: "password", Value: userToAuthorize.Password}})
+
+	if err != nil {
+		log.Fatal("Failed authentication. Error:- \n\t", err)
+		return nil
 	}
 
-	return User{}
+	return user
 }
 
 // handle login
 func handleLogin(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Service is responding")
 
 	var user User
 	err := json.NewDecoder(r.Body).Decode(&user)
@@ -32,8 +38,8 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//Authenticate the user credentials with the database
-	user = validateCred(usersMap, user)
-	if (User{} == user) {
+	user = validateCred(user)
+	if (user == nil) {
 		log.Fatal(err)
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte("Invalid Credentials!!"))
