@@ -4,16 +4,21 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"os"
 
+	db "github.com/jiteshdhamija/LeafMS-BackEnd/database"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-var database = connectDB()
+// type User db.User
+// type Leave db.Leave
+// type LeaveSpan db.LeaveSpan
+// type Database db.Database
 
-// function to validate the user
-func validateCred(userToAuthorize User) []User {
-	user, err := database.find("employees", bson.D{
+var database = db.ConnectDB()
+
+// function to validate the db.user
+func validateCred(userToAuthorize db.User) []db.User {
+	user, err := database.Find("employees", bson.D{
 		{Key: "username", Value: userToAuthorize.Username},
 		{Key: "password", Value: userToAuthorize.Password}})
 
@@ -28,7 +33,7 @@ func validateCred(userToAuthorize User) []User {
 // handle login
 func handleLogin(w http.ResponseWriter, r *http.Request) {
 
-	var user User
+	var user db.User
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
 		log.Fatal(err)
@@ -51,30 +56,30 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 
 // handle leave application
 func handleApply(w http.ResponseWriter, r *http.Request) {
-	var leaveApplication Leave
+	var leaveApplication db.Leave
 	err := json.NewDecoder(r.Body).Decode(&leaveApplication)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	leaveToAppend := LeaveSpan{
-		Start: leaveApplication.Leaves[0].Start,
-		End:   leaveApplication.Leaves[0].End,
-	}
+	// leaveToAppend := LeaveSpan{
+	// 	Start: leaveApplication.Leaves[0].Start,
+	// 	End:   leaveApplication.Leaves[0].End,
+	// }
 
-	for i := 0; i < len(leaveDatabase); i++ {
-		if leaveDatabase[i].Username == leaveApplication.Username {
-			leaveDatabase[i].Leaves = append(leaveDatabase[i].Leaves, leaveToAppend)
-			break
-		}
-	}
-	leaveDatabaseContent, _ := json.Marshal(leaveDatabase)
-	if err := os.WriteFile("leaveDatabase.json", leaveDatabaseContent, 0666); err != nil {
-		log.Fatal(err)
-	}
+	// for i := 0; i < len(leaveDatabase); i++ {
+	// 	if leaveDatabase[i].db.Username == leaveApplication.db.Username {
+	// 		leaveDatabase[i].Leaves = append(leaveDatabase[i].Leaves, leaveToAppend)
+	// 		break
+	// 	}
+	// }
+	// leaveDatabaseContent, _ := json.Marshal(leaveDatabase)
+	// if err := os.WriteFile("leaveDatabase.json", leaveDatabaseContent, 0666); err != nil {
+	// 	log.Fatal(err)
+	// }
 
 	w.WriteHeader(http.StatusCreated)
-	response, _ := json.Marshal(leaveDatabaseContent)
+	response, _ := json.Marshal(leaveApplication)
 	w.Write(response)
 }
