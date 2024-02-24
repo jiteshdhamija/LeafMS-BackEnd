@@ -32,7 +32,6 @@ func validateCred(userToAuthorize db.User) []db.User {
 
 // handle login
 func handleLogin(w http.ResponseWriter, r *http.Request) {
-
 	var user db.User
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
@@ -63,23 +62,30 @@ func handleApply(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// leaveToAppend := LeaveSpan{
-	// 	Start: leaveApplication.Leaves[0].Start,
-	// 	End:   leaveApplication.Leaves[0].End,
-	// }
+	//Need to change the response when the username is not found
+	result, err := database.UpdateOne("leaves", bson.D{
+		{Key: "username", Value: leaveApplication.Username},
+	}, bson.D{
+		{Key: "$push", Value: bson.D{
+			{Key: "leaves", Value: bson.D{
+				{Key: "$each", Value: leaveApplication.Leaves},
+			}},
+		}},
+	})
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
-	// for i := 0; i < len(leaveDatabase); i++ {
-	// 	if leaveDatabase[i].db.Username == leaveApplication.db.Username {
-	// 		leaveDatabase[i].Leaves = append(leaveDatabase[i].Leaves, leaveToAppend)
-	// 		break
-	// 	}
-	// }
-	// leaveDatabaseContent, _ := json.Marshal(leaveDatabase)
-	// if err := os.WriteFile("leaveDatabase.json", leaveDatabaseContent, 0666); err != nil {
-	// 	log.Fatal(err)
-	// }
+	if result.MatchedCount == 0 {
+		w.WriteHeader(http.StatusNotFound)
+		response, _ := json.Marshal("No User with the username: " + leaveApplication.Username + " exists.")
+		w.Write(response)
+		return
+	} else {
+		w.WriteHeader(http.StatusOK)
+	}
 
-	w.WriteHeader(http.StatusCreated)
-	response, _ := json.Marshal(leaveApplication)
+	response, _ := json.Marshal(result)
 	w.Write(response)
 }

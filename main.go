@@ -16,25 +16,6 @@ import (
 // var leaveMap = map[string][]LeaveSpan{}
 
 func main() {
-	// err := json.Unmarshal(userDatabaseContent, &userDatabase)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// for i := 0; i < len(userDatabase); i++ {
-	// 	user := userDatabase[i]
-	// 	usersMap[user.Username] = user
-	// }
-
-	// err = json.Unmarshal(leaveDatabaseContent, &leaveDatabase)
-	// if err != nil {
-	// 	log.Fatal("err")
-	// }
-
-	// for i := 0; i < len(leaveDatabase); i++ {
-	// 	user := leaveDatabase[i].Username
-	// 	leaveMap[user] = leaveDatabase[i].Leaves
-	// }
 
 	routes := mux.NewRouter()
 	routes.HandleFunc("/login", handleLogin).Methods("GET")
