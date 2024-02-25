@@ -17,4 +17,5 @@ RUN go build -o /godocker
 # Tells Docker which network port your container listens on
 EXPOSE 8080
 
-ENTRYPOINT ["go", "run", "main.go","db_connection.go"]
+# ENTRYPOINT ["go", "run", "main.go","db_connection.go"]
+CMD ["/godocker"]
