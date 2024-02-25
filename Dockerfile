@@ -10,6 +10,7 @@ COPY . .
 # Installs Go dependencies
 RUN go mod download
 
+RUN go get ./...
 # Builds your app with optional configuration
 RUN go build -o /godocker
 
