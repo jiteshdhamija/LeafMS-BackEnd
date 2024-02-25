@@ -17,7 +17,7 @@ import (
 var database = db.ConnectDB()
 
 // function to validate the db.user
-func validateCred(userToAuthorize db.User) []db.User {
+func validateCred(userToAuthorize db.User) []interface{} {
 	user, err := database.Find("employees", bson.D{
 		{Key: "username", Value: userToAuthorize.Username},
 		{Key: "password", Value: userToAuthorize.Password}})
@@ -49,7 +49,7 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response, _ := json.Marshal(result)
+	response, _ := json.MarshalIndent(result, "", "	")
 	w.Write(response)
 }
 
@@ -62,7 +62,6 @@ func handleApply(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//Need to change the response when the username is not found
 	result, err := database.UpdateOne("leaves", bson.D{
 		{Key: "username", Value: leaveApplication.Username},
 	}, bson.D{
@@ -86,6 +85,37 @@ func handleApply(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}
 
-	response, _ := json.Marshal(result)
+	response, _ := json.MarshalIndent(result, "", "	")
 	w.Write(response)
+}
+
+// handle `view leaves`
+func handleViewLeaves(w http.ResponseWriter, r *http.Request) {
+	var user db.User
+	err := json.NewDecoder(r.Body).Decode(&user)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	result, err := database.Find("leaves", bson.D{
+		{Key: "username", Value: user.Username},
+	})
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+	// var leaves []db.Leave
+	// for i := 0; i < len(result); i++ {
+	// 	leave, ok := result[i].(db.Leave)
+	// 	if !ok {
+	// 		log.Fatal("Interface to Leave struct conversion failed")
+	// 	} else {
+	// 		leaves = append(leaves, leave)
+	// 	}
+	// }
+
+	response, _ := json.MarshalIndent(result, "", "	")
+	w.Write(response)
+
 }

@@ -20,6 +20,7 @@ func main() {
 	routes := mux.NewRouter()
 	routes.HandleFunc("/login", handleLogin).Methods("GET")
 	routes.HandleFunc("/apply", handleApply).Methods("PUT")
+	routes.HandleFunc("/leaves", handleViewLeaves).Methods("GET")
 
 	http.ListenAndServe(":8080", routes)
 }
