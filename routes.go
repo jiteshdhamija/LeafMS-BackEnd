@@ -5,7 +5,8 @@ import (
 	"log"
 	"net/http"
 
-	db "github.com/jiteshdhamija/LeafMS-BackEnd/database"
+	db "LeafMS-BackEnd/database"
+
 	"go.mongodb.org/mongo-driver/bson"
 )
 
