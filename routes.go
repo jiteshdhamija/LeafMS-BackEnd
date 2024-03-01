@@ -18,7 +18,7 @@ import (
 var database = db.ConnectDB()
 
 // function to validate the db.user
-func validateCred(userToAuthorize db.User) []interface{} {
+func validateCred(userToAuthorize db.User) interface{} {
 	user, err := database.Find("employees", bson.D{
 		{Key: "username", Value: userToAuthorize.Username},
 		{Key: "password", Value: userToAuthorize.Password}})

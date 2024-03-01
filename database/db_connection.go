@@ -74,7 +74,7 @@ func (db Database) InsertMany(collectionName string, document []interface{}) (*m
 	return result, nil
 }
 
-func (db Database) Find(collectionName string, filter bson.D) ([]interface{}, error) {
+func (db Database) Find(collectionName string, filter bson.D) (interface{}, error) {
 	var result []interface{}
 	collection := db.Database.Collection(collectionName)
 	resultCursor, err := collection.Find(db.Context, filter)
@@ -86,7 +86,6 @@ func (db Database) Find(collectionName string, filter bson.D) ([]interface{}, er
 		log.Panic("Could not complete the find query in the database. Error:-\n\t", err)
 		return nil, err
 	}
-
 	return result, nil
 }
 
