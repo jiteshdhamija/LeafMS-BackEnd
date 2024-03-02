@@ -10,10 +10,12 @@ COPY . .
 # Installs Go dependencies
 RUN go mod download
 
+RUN go get -d -t ./...
 # Builds your app with optional configuration
 RUN go build -o /godocker
 
 # Tells Docker which network port your container listens on
 EXPOSE 8080
 
-ENTRYPOINT ["go", "run", "main.go","db_connection.go"]
+# ENTRYPOINT ["go", "run", "main.go","db_connection.go"]
+CMD ["/godocker"]

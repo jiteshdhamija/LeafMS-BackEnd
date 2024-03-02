@@ -1,4 +1,4 @@
-module github.com/jiteshdhamija/LeafMS-BackEnd
+module LeafMS-BackEnd
 
 go 1.21.5
 
