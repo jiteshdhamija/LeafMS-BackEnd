@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	db "LeafMS-BackEnd/database"
+	util "LeafMS-BackEnd/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -19,21 +20,30 @@ var database = db.ConnectDB()
 
 // function to validate the db.user
 func validateCred(userToAuthorize db.User) interface{} {
+	var login db.UserLogin
 	user, err := database.Find("employees", bson.D{
 		{Key: "username", Value: userToAuthorize.Username},
 		{Key: "password", Value: userToAuthorize.Password}})
-
 	if err != nil {
 		log.Fatal("Failed authentication. Error:- \n\t", err)
-		return nil
+		login.Login = false
+		return login
 	}
-
-	return user
+	var user2 = util.InterFaceToUser(user)
+	if user2.Username == "" {
+		login.Login = false
+		return login
+	} else {
+		login.Username = user2.Username
+		login.Login = true
+	}
+	return login
 }
 
 // handle login
 func handleLogin(w http.ResponseWriter, r *http.Request) {
 	var user db.User
+	log.Println("started login api")
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
 		log.Fatal(err)
@@ -43,12 +53,8 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//Authenticate the user credentials with the database
-	result := validateCred(user)
-	if result == nil {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte("Invalid Credentials!!"))
-		return
-	}
+	result := validateCred(user).(db.UserLogin)
+	log.Println("validated cred")
 
 	response, _ := json.MarshalIndent(result, "", "	")
 	w.Write(response)
