@@ -99,6 +99,8 @@ func handleViewLeaves(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// var result db.Leave
+
 	result, err := database.Find("leaves", bson.D{
 		{Key: "username", Value: user.Username},
 	})
@@ -106,7 +108,9 @@ func handleViewLeaves(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
-	// var leaves []db.Leave
+
+	// leaves := result.(db.Leave)
+
 	// for i := 0; i < len(result); i++ {
 	// 	leave, ok := result[i].(db.Leave)
 	// 	if !ok {
