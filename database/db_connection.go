@@ -75,20 +75,18 @@ func (db Database) InsertMany(collectionName string, document []interface{}) (*m
 }
 
 func (db Database) Find(collectionName string, filter bson.D) (interface{}, error) {
-	// var result []interface{}
-	var leaves []Leave
-
+	var result []interface{}
 	collection := db.Database.Collection(collectionName)
 	resultCursor, err := collection.Find(db.Context, filter)
 	if err != nil {
 		log.Fatal("The find query did not return a cursor. Error:-\n\t", err)
 		return nil, err
 	}
-	if err = resultCursor.All(db.Context, &leaves); err != nil {
+	if err = resultCursor.All(db.Context, &result); err != nil {
 		log.Panic("Could not complete the find query in the database. Error:-\n\t", err)
 		return nil, err
 	}
-	return leaves, nil
+	return result, nil
 }
 
 func (db Database) UpdateOne(collectionName string, filter bson.D, update interface{}) (*mongo.UpdateResult, error) {
