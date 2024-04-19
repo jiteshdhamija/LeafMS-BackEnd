@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"time"
@@ -167,12 +169,17 @@ func handleAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Do stuff here
 		jwtToken := r.Header.Get("Authorization")
+
+		body, err := io.ReadAll(r.Body)
+
 		var user db.User
-		err := json.NewDecoder(r.Body).Decode(&user)
+		err = json.NewDecoder(r.Body).Decode(&user)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
+		// Replace the body with a new reader after reading from the original
+		r.Body = io.NopCloser(bytes.NewBuffer(body))
 
 		err = verifyToken(jwtToken, user.Username)
 		if err != nil {
@@ -184,3 +191,10 @@ func handleAuth(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
+
+// func reuseBody(next http.Handler) http.Handler {
+// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+// 		r.Body = io.NopCloser(util.ReusableReader(r.Body))
+// 		next.ServeHTTP(w, r)
+// 	})
+// }
