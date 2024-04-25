@@ -53,7 +53,7 @@ func verifyToken(tokenString string, username string) error {
 // function to validate the db.user
 func validateCred(userToAuthorize db.User) interface{} {
 	var login db.UserLogin
-	userInterface, err := database.Find("employees", bson.D{
+	userInterface, _, err := database.Find("employees", bson.D{
 		{Key: "username", Value: userToAuthorize.Username},
 		{Key: "password", Value: userToAuthorize.Password}})
 	if err != nil {
@@ -103,9 +103,9 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	w.Write(response)
 }
 
-// handle leave application
+// handle `apply leaves`
 func handleApply(w http.ResponseWriter, r *http.Request) {
-	var leaveApplication db.Leave
+	var leaveApplication db.Leaves
 	err := json.NewDecoder(r.Body).Decode(&leaveApplication)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -148,7 +148,7 @@ func handleViewLeaves(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := database.Find("leaves", bson.D{
+	_, result, err := database.Find("leaves", bson.D{
 		{Key: "username", Value: user.Username},
 	})
 	if err != nil {
@@ -158,6 +158,27 @@ func handleViewLeaves(w http.ResponseWriter, r *http.Request) {
 
 	response, _ := json.MarshalIndent(result, "", "	")
 	w.Write(response)
+}
+
+// hanlde `view leave applications`
+func handleViewLeaveApplications(w http.ResponseWriter, r *http.Request) {
+	var approver db.User
+	err := json.NewDecoder(r.Body).Decode(&approver)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	_, result, err := database.Find("leaves", bson.D{
+		{Key: "approver", Value: approver.Username},
+	})
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	response, _ := json.MarshalIndent(result, "", " ")
+	w.Write((response))
 }
 
 // handle leaves approval

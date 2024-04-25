@@ -11,7 +11,7 @@ type collection interface {
 func (u User) find() {
 	fmt.Println(u.Username)
 }
-func (l Leave) find() {
+func (l Leaves) find() {
 	fmt.Println(l.Leaves)
 }
 
@@ -30,11 +30,13 @@ type UserLogin struct {
 }
 
 type LeaveSpan struct {
-	Start string `bson:"startTime" json:"startTime"`
-	End   string `bson:"endTime" json:"endTime"`
+	Start    string `bson:"startTime" json:"startTime"`
+	End      string `bson:"endTime" json:"endTime"`
+	Approved bool   `bson:"approved" json:"approved"`
 }
 
-type Leave struct {
+type Leaves struct {
 	Username string      `bson:"username" json:"username"`
+	Approver string      `bson:"approver" json:"approver"`
 	Leaves   []LeaveSpan `bson:"leaves" json:"leaves"`
 }
