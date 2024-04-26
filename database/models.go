@@ -1,20 +1,5 @@
 package db
 
-import (
-	"fmt"
-)
-
-type collection interface {
-	find() interface{}
-}
-
-func (u User) find() {
-	fmt.Println(u.Username)
-}
-func (l Leaves) find() {
-	fmt.Println(l.Leaves)
-}
-
 type User struct {
 	Username    string `bson:"username" json:"username"`
 	Password    string `bson:"password" json:"password"`
