@@ -1,10 +1,8 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"time"
@@ -13,6 +11,7 @@ import (
 	util "LeafMS-BackEnd/utils"
 
 	"github.com/golang-jwt/jwt"
+	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -92,11 +91,13 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	result := validateCred(user).(db.UserLogin)
 	log.Println("validated cred")
 
-	jwtToken, err := generateJWT(user.Username)
+	sessiondId := uuid.New().String()
+	jwtToken, err := generateJWT(sessiondId)
 	if err != nil {
 		log.Printf("couldn't generate JWT auth token.\nError: %v", err)
 	}
 	w.Header().Add("Authorization", jwtToken)
+	w.Header().Add("Session-Id", sessiondId)
 
 	response, _ := json.MarshalIndent(result, "", "	")
 	w.Write(response)
@@ -169,19 +170,9 @@ func handleAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Do stuff here
 		jwtToken := r.Header.Get("Authorization")
+		sessionId := r.Header.Get("Session-Id")
 
-		body, err := io.ReadAll(r.Body)
-
-		var user db.User
-		err = json.NewDecoder(r.Body).Decode(&user)
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-		// Replace the body with a new reader after reading from the original
-		r.Body = io.NopCloser(bytes.NewBuffer(body))
-
-		err = verifyToken(jwtToken, user.Username)
+		err := verifyToken(jwtToken, sessionId)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
@@ -191,10 +182,3 @@ func handleAuth(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
-
-// func reuseBody(next http.Handler) http.Handler {
-// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-// 		r.Body = io.NopCloser(util.ReusableReader(r.Body))
-// 		next.ServeHTTP(w, r)
-// 	})
-// }
