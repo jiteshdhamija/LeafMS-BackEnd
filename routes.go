@@ -8,10 +8,12 @@ import (
 	"time"
 
 	db "LeafMS-BackEnd/database"
+	"LeafMS-BackEnd/utils"
 
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 var database = db.ConnectDB()
@@ -78,7 +80,7 @@ func validateCred(userToAuthorize db.User) interface{} {
 	return login
 }
 
-// handle login
+// handle `login`
 func handleLogin(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "application/json")
 	var user db.User
@@ -115,6 +117,9 @@ func handleApply(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
+	}
+	for index, _ := range leaveApplication.Leaves {
+		leaveApplication.Leaves[index].Id = primitive.NewObjectID()
 	}
 
 	result, err := database.UpdateOne("leaves", bson.D{
@@ -161,17 +166,7 @@ func handleViewLeaves(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var leaves []db.Leaves
-	for _, entry := range data {
-		var leave db.Leaves
-		if err = bson.Unmarshal(entry, &leave); err != nil {
-			log.Fatal(
-				"The decoding of leaveApplication from raw bson document failed!\nError:-\n\n", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		leaves = append(leaves, leave)
-	}
+	leaves := utils.ReturnLeaves(data)
 
 	response, _ := json.MarshalIndent(leaves, "", "	")
 	w.Write(response)
@@ -186,7 +181,7 @@ func handleViewLeaveApplications(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := database.Find("leaves", bson.D{
+	data, err := database.Find("leaves", bson.D{
 		{Key: "approver", Value: approver.Username},
 	})
 	if err != nil {
@@ -194,24 +189,13 @@ func handleViewLeaveApplications(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var leaveApplications []db.Leaves
-	for _, entry := range result {
-		var application db.Leaves
-		if err = bson.Unmarshal(entry, &application); err != nil {
-			log.Fatal(
-				"The decoding of leaveApplication from raw bson document failed!\nError:-\n\n", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		leaveApplications = append(leaveApplications, application)
-	}
+	leaveApplications := utils.ReturnLeaves(data)
 
 	response, _ := json.MarshalIndent(leaveApplications, "", " ")
-	w.Write((response))
+	w.Write(response)
 }
 
-// handle leaves approval
+// handle `leaves approval`
 func handleLeaveApproval(w http.ResponseWriter, r *http.Request) {
 
 }

@@ -1,5 +1,7 @@
 package db
 
+import "go.mongodb.org/mongo-driver/bson/primitive"
+
 type User struct {
 	Username    string `bson:"username" json:"username"`
 	Password    string `bson:"password" json:"password"`
@@ -15,9 +17,10 @@ type UserLogin struct {
 }
 
 type LeaveSpan struct {
-	Start    string `bson:"startTime" json:"startTime"`
-	End      string `bson:"endTime" json:"endTime"`
-	Approved bool   `bson:"approved" json:"approved"`
+	Id       primitive.ObjectID `bson:"id" json:"id"`
+	Start    string             `bson:"startTime" json:"startTime"`
+	End      string             `bson:"endTime" json:"endTime"`
+	Approved bool               `bson:"approved" json:"approved"`
 }
 
 type Leaves struct {
