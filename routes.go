@@ -118,7 +118,7 @@ func handleApply(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	for index, _ := range leaveApplication.Leaves {
+	for index := range leaveApplication.Leaves {
 		leaveApplication.Leaves[index].Id = primitive.NewObjectID()
 	}
 
@@ -167,7 +167,6 @@ func handleViewLeaves(w http.ResponseWriter, r *http.Request) {
 	}
 
 	leaves := utils.ReturnLeaves(data)
-
 	response, _ := json.MarshalIndent(leaves, "", "	")
 	w.Write(response)
 }
@@ -190,13 +189,36 @@ func handleViewLeaveApplications(w http.ResponseWriter, r *http.Request) {
 	}
 
 	leaveApplications := utils.ReturnLeaves(data)
-
 	response, _ := json.MarshalIndent(leaveApplications, "", " ")
 	w.Write(response)
 }
 
 // handle `leaves approval`
 func handleLeaveApproval(w http.ResponseWriter, r *http.Request) {
+	var leaveData db.Leaves
+	if err := json.NewDecoder(r.Body).Decode(&leaveData); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	updatedResult, err := database.UpdateOne("leaves", bson.D{
+		{Key: "username", Value: leaveData.Username}, {
+			Key: "leaves", Value: bson.D{{
+				Key: "$elemMatch", Value: bson.D{{"id", leaveData.Leaves[0].Id}}}}},
+	}, bson.D{
+		{Key: "$set",
+			Value: bson.D{
+				{Key: "leaves.$.approved", Value: leaveData.Leaves[0].Approved},
+			},
+		},
+	})
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	response, _ := json.MarshalIndent(updatedResult, "", "	")
+	w.Write(response)
 
 }
 

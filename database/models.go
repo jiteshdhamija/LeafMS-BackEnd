@@ -16,7 +16,7 @@ type UserLogin struct {
 	Login    bool   `bson:"isLogin" json:"isLogin"`
 }
 
-type LeaveSpan struct {
+type LeaveData struct {
 	Id       primitive.ObjectID `bson:"id" json:"id"`
 	Start    string             `bson:"startTime" json:"startTime"`
 	End      string             `bson:"endTime" json:"endTime"`
@@ -26,5 +26,5 @@ type LeaveSpan struct {
 type Leaves struct {
 	Username string      `bson:"username" json:"username"`
 	Approver string      `bson:"approver" json:"approver"`
-	Leaves   []LeaveSpan `bson:"leaves" json:"leaves"`
+	Leaves   []LeaveData `bson:"leaves" json:"leaves"`
 }

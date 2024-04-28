@@ -15,7 +15,7 @@ func main() {
 	authRoute.HandleFunc("/apply", handleApply).Methods("PUT")
 	authRoute.HandleFunc("/leaves", handleViewLeaves).Methods("GET")
 	authRoute.HandleFunc("/applications", handleViewLeaveApplications).Methods(("GET"))
-	authRoute.HandleFunc("/aprrove", handleLeaveApproval).Methods("PUT")
+	authRoute.HandleFunc("/approve", handleLeaveApproval).Methods("PATCH")
 
 	http.ListenAndServe(":8080", routes)
 }
