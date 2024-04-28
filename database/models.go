@@ -28,3 +28,11 @@ type Leaves struct {
 	Approver string      `bson:"approver" json:"approver"`
 	Leaves   []LeaveData `bson:"leaves" json:"leaves"`
 }
+
+type LeavesCount struct {
+	CausalLeaves     int `bson:"casualLeaves" json:"casualLeaves"`
+	MedicalLeaves    int `bson:"medicalLeaves" json:"medicalLeaves"`
+	PrivilegedLeaves int `bson:"privilegedLeaves" json:"privilegedLeaves"`
+	CompOff          int `bson:"compOff" json:"compOff"`
+	TotalLeaveCount  int `bson:"totalLeaveCount" json:"totalLeaveCount"`
+}
