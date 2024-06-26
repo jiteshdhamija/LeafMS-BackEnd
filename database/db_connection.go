@@ -74,19 +74,34 @@ func (db Database) InsertMany(collectionName string, document []interface{}) (*m
 	return result, nil
 }
 
-func (db Database) Find(collectionName string, filter bson.D) (interface{}, error) {
-	var result []interface{}
+func (db Database) Find(collectionName string, filter bson.D) ([]bson.Raw, error) {
+	var data []bson.Raw
+
 	collection := db.Database.Collection(collectionName)
 	resultCursor, err := collection.Find(db.Context, filter)
 	if err != nil {
-		log.Fatal("The find query did not return a cursor. Error:-\n\t", err)
+		log.Fatal("The Find query did not return a cursor. Error:-\n\t", err)
 		return nil, err
 	}
-	if err = resultCursor.All(db.Context, &result); err != nil {
-		log.Panic("Could not complete the find query in the database. Error:-\n\t", err)
+
+	if err = resultCursor.All(db.Context, &data); err != nil {
+		log.Panic("Could not complete the Find query in the database. Error:-\n\t", err)
 		return nil, err
 	}
-	return result, nil
+	return data, nil
+}
+
+func (db Database) FindOne(collectionName string, filter bson.D) (bson.Raw, error) {
+	var data bson.Raw
+
+	collection := db.Database.Collection(collectionName)
+	err := collection.FindOne(db.Context, filter).Decode(&data)
+	if err != nil {
+		log.Fatal("The FindOne query did not return a result. Error:-\n\t", err)
+		return nil, err
+	}
+
+	return data, nil
 }
 
 func (db Database) UpdateOne(collectionName string, filter bson.D, update interface{}) (*mongo.UpdateResult, error) {

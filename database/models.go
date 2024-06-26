@@ -1,19 +1,6 @@
 package db
 
-import (
-	"fmt"
-)
-
-type collection interface {
-	find() interface{}
-}
-
-func (u User) find() {
-	fmt.Println(u.Username)
-}
-func (l Leave) find() {
-	fmt.Println(l.Leaves)
-}
+import "go.mongodb.org/mongo-driver/bson/primitive"
 
 type User struct {
 	Username    string `bson:"username" json:"username"`
@@ -29,12 +16,23 @@ type UserLogin struct {
 	Login    bool   `bson:"isLogin" json:"isLogin"`
 }
 
-type LeaveSpan struct {
-	Start string `bson:"startTime" json:"startTime"`
-	End   string `bson:"endTime" json:"endTime"`
+type LeaveData struct {
+	Id       primitive.ObjectID `bson:"id" json:"id"`
+	Start    string             `bson:"startTime" json:"startTime"`
+	End      string             `bson:"endTime" json:"endTime"`
+	Approved bool               `bson:"approved" json:"approved"`
 }
 
-type Leave struct {
+type Leaves struct {
 	Username string      `bson:"username" json:"username"`
-	Leaves   []LeaveSpan `bson:"leaves" json:"leaves"`
+	Approver string      `bson:"approver" json:"approver"`
+	Leaves   []LeaveData `bson:"leaves" json:"leaves"`
+}
+
+type LeavesCount struct {
+	CausalLeaves     int `bson:"casualLeaves" json:"casualLeaves"`
+	MedicalLeaves    int `bson:"medicalLeaves" json:"medicalLeaves"`
+	PrivilegedLeaves int `bson:"privilegedLeaves" json:"privilegedLeaves"`
+	CompOff          int `bson:"compOff" json:"compOff"`
+	TotalLeaveCount  int `bson:"totalLeaveCount" json:"totalLeaveCount"`
 }
