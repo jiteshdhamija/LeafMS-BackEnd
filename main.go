@@ -6,8 +6,6 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var loggedInToken map[string]string
-
 func main() {
 
 	routes := mux.NewRouter()
@@ -16,7 +14,8 @@ func main() {
 	authRoute.Use(handleAuth)
 	authRoute.HandleFunc("/apply", handleApply).Methods("PUT")
 	authRoute.HandleFunc("/leaves", handleViewLeaves).Methods("GET")
-	authRoute.HandleFunc("/aprrove", handleLeaveApproval).Methods("PUT")
+	authRoute.HandleFunc("/applications", handleViewLeaveApplications).Methods(("GET"))
+	authRoute.HandleFunc("/approve", handleLeaveApproval).Methods("PATCH")
 
 	http.ListenAndServe(":8080", routes)
 }

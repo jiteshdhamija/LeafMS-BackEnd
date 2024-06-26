@@ -8,11 +8,12 @@ import (
 	"time"
 
 	db "LeafMS-BackEnd/database"
-	util "LeafMS-BackEnd/utils"
+	"LeafMS-BackEnd/utils"
 
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 var database = db.ConnectDB()
@@ -53,7 +54,7 @@ func verifyToken(tokenString string, username string) error {
 // function to validate the db.user
 func validateCred(userToAuthorize db.User) interface{} {
 	var login db.UserLogin
-	userInterface, err := database.Find("employees", bson.D{
+	data, err := database.FindOne("employees", bson.D{
 		{Key: "username", Value: userToAuthorize.Username},
 		{Key: "password", Value: userToAuthorize.Password}})
 	if err != nil {
@@ -61,7 +62,13 @@ func validateCred(userToAuthorize db.User) interface{} {
 		login.Login = false
 		return login
 	}
-	var user = util.InterFaceToUser(userInterface)
+
+	var user db.User
+	err = bson.Unmarshal(data, &user)
+	if err != nil {
+		log.Fatal("Couldn't unwrap the user data recieved from mongoDB.\nError:-\n\n", err)
+	}
+
 	if user.Username == "" {
 		login.Login = false
 		return login
@@ -73,7 +80,7 @@ func validateCred(userToAuthorize db.User) interface{} {
 	return login
 }
 
-// handle login
+// handle `login`
 func handleLogin(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "application/json")
 	var user db.User
@@ -103,13 +110,16 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	w.Write(response)
 }
 
-// handle leave application
+// handle `apply leaves`
 func handleApply(w http.ResponseWriter, r *http.Request) {
-	var leaveApplication db.Leave
+	var leaveApplication db.Leaves
 	err := json.NewDecoder(r.Body).Decode(&leaveApplication)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
+	}
+	for index := range leaveApplication.Leaves {
+		leaveApplication.Leaves[index].Id = primitive.NewObjectID()
 	}
 
 	result, err := database.UpdateOne("leaves", bson.D{
@@ -148,7 +158,7 @@ func handleViewLeaves(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := database.Find("leaves", bson.D{
+	data, err := database.Find("leaves", bson.D{
 		{Key: "username", Value: user.Username},
 	})
 	if err != nil {
@@ -156,12 +166,59 @@ func handleViewLeaves(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response, _ := json.MarshalIndent(result, "", "	")
+	leaves := utils.ReturnLeaves(data)
+	response, _ := json.MarshalIndent(leaves, "", "	")
 	w.Write(response)
 }
 
-// handle leaves approval
+// hanlde `view leave applications`
+func handleViewLeaveApplications(w http.ResponseWriter, r *http.Request) {
+	var approver db.User
+	err := json.NewDecoder(r.Body).Decode(&approver)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	data, err := database.Find("leaves", bson.D{
+		{Key: "approver", Value: approver.Username},
+	})
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	leaveApplications := utils.ReturnLeaves(data)
+	response, _ := json.MarshalIndent(leaveApplications, "", " ")
+	w.Write(response)
+}
+
+// handle `leaves approval`
 func handleLeaveApproval(w http.ResponseWriter, r *http.Request) {
+	var leaveData db.Leaves
+	if err := json.NewDecoder(r.Body).Decode(&leaveData); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	updatedResult, err := database.UpdateOne("leaves", bson.D{
+		{Key: "username", Value: leaveData.Username}, {
+			Key: "leaves", Value: bson.D{{
+				Key: "$elemMatch", Value: bson.D{{"id", leaveData.Leaves[0].Id}}}}},
+	}, bson.D{
+		{Key: "$set",
+			Value: bson.D{
+				{Key: "leaves.$.approved", Value: leaveData.Leaves[0].Approved},
+			},
+		},
+	})
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	response, _ := json.MarshalIndent(updatedResult, "", "	")
+	w.Write(response)
 
 }
 
