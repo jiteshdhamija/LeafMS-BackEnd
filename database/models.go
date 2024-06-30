@@ -36,3 +36,40 @@ type LeavesCount struct {
 	CompOff          int `bson:"compOff" json:"compOff"`
 	TotalLeaveCount  int `bson:"totalLeaveCount" json:"totalLeaveCount"`
 }
+
+//structs for fetching public holidays
+type Meta struct {
+	Code int `bson:"code" json:"code"`
+}
+type Country struct {
+	Id   string `bson:"id" json:"id"`
+	Name string `bson:"name" json:"name"`
+}
+type Datetime struct {
+	Year  int `bson:"year" json:"year"`
+	Month int `bson:"month" json:"month"`
+	Day   int `bson:"day" json:"day"`
+}
+type Date struct {
+	Iso      string   `bson:"iso" json:"iso"`
+	Datetime Datetime `bson:"datetime" json:"datetime"`
+}
+type Holiday struct {
+	Name         string   `bson:"name" json:"name"`
+	Description  string   `bson:"description" json:"description"`
+	Country      Country  `bson:"country" json:"country"`
+	Date         Date     `bson:"date" json:"date"`
+	Type         []string `bson:"type" json:"type"`
+	PrimaryType  string   `bson:"primary_type" json:"primary_type"`
+	CanonicalUrl string   `bson:"canonical_url" json:"canonical_url"`
+	UrlId        string   `bson:"urlid" json:"urlid"`
+	Locations    string   `bson:"locations" json:"locations"`
+	States       string   `bson:"states" json:"states"`
+}
+type HolidayResponse struct {
+	Holidays []Holiday `bson:"holidays" json:"holidays"`
+}
+type HolidayApiResponse struct {
+	Meta     Meta            `bson:"meta" json:"meta"`
+	Response HolidayResponse `bson:"response" json:"response"`
+}

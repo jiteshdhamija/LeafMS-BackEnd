@@ -58,8 +58,8 @@ func validateCred(userToAuthorize db.User) interface{} {
 		{Key: "username", Value: userToAuthorize.Username},
 		{Key: "password", Value: userToAuthorize.Password}})
 	if err != nil {
-		log.Fatal("Failed authentication. Error:- \n\t", err)
 		login.Login = false
+		log.Fatal("Failed authentication. Error:- \n\t", err)
 		return login
 	}
 
@@ -204,7 +204,7 @@ func handleLeaveApproval(w http.ResponseWriter, r *http.Request) {
 	updatedResult, err := database.UpdateOne("leaves", bson.D{
 		{Key: "username", Value: leaveData.Username}, {
 			Key: "leaves", Value: bson.D{{
-				Key: "$elemMatch", Value: bson.D{{"id", leaveData.Leaves[0].Id}}}}},
+				Key: "$elemMatch", Value: bson.D{{Key: "id", Value: leaveData.Leaves[0].Id}}}}},
 	}, bson.D{
 		{Key: "$set",
 			Value: bson.D{

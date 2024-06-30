@@ -8,6 +8,9 @@ import (
 
 func main() {
 
+	//uncomment the following method only when you want to insert public holidays of a country for a specific year
+	// utils.PersistPublicHolidays(2024, "IN")
+
 	routes := mux.NewRouter()
 	routes.HandleFunc("/login", handleLogin).Methods("GET")
 	authRoute := routes.NewRoute().Subrouter()
