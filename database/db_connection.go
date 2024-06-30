@@ -18,6 +18,7 @@ type Database struct {
 	Database           *mongo.Database
 	EmployeeCollection *mongo.Collection
 	LeaveCollection    *mongo.Collection
+	PublicHolidays     *mongo.Collection
 }
 
 func ConnectDB() *Database {
@@ -25,7 +26,7 @@ func ConnectDB() *Database {
 	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
 	opts := options.Client().ApplyURI(URI).SetServerAPIOptions(serverAPI)
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*100000000)
-	// Create a new client and connect to the server
+
 	client, err := mongo.Connect(ctx, opts)
 	if err != nil {
 		panic(err)
@@ -38,7 +39,7 @@ func ConnectDB() *Database {
 
 	database := client.Database("test")
 	employeeCollection := database.Collection("employees")
-	// employeeCollection.Find(ctx, bson.M{"team": "Rockwell"})
+	publicHolidaysCollection := database.Collection("publicHolidays")
 	leaveCollection := database.Collection("leaves")
 
 	// Send a ping to confirm a successful connection
@@ -52,6 +53,7 @@ func ConnectDB() *Database {
 		Database:           database,
 		EmployeeCollection: employeeCollection,
 		LeaveCollection:    leaveCollection,
+		PublicHolidays:     publicHolidaysCollection,
 	}
 }
 
