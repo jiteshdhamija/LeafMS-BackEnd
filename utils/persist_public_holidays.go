@@ -29,7 +29,7 @@ func PersistPublicHolidays(year int, countryCode string) {
 
 	var holidaysJson db.HolidayApiResponse
 	if err := json.NewDecoder(resp.Body).Decode(&holidaysJson); err != nil {
-		fmt.Printf("Error decoding response: %v\n", err)
+		log.Printf("Error decoding response: %v\n", err)
 		return
 	}
 

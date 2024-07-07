@@ -73,3 +73,9 @@ type HolidayApiResponse struct {
 	Meta     Meta            `bson:"meta" json:"meta"`
 	Response HolidayResponse `bson:"response" json:"response"`
 }
+
+type HolidayArgs struct {
+	Country string `bson:"country" json :"country"`
+	Year    int    `bson:"year" json :"year"`
+	Month   int    `bson:"month" json:"month"`
+}

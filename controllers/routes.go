@@ -1,87 +1,19 @@
-package main
+package controller
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
-	"time"
 
 	db "LeafMS-BackEnd/database"
 	"LeafMS-BackEnd/utils"
 
-	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-var database = db.ConnectDB()
-
-// generate JWT token
-func generateJWT(username string) (string, error) {
-	secretKey := []byte("jiteshmc" + username)
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
-		jwt.MapClaims{
-			"username": username,
-			"exp":      time.Now().Add(time.Hour * 24).Unix(),
-		})
-	tokenString, err := token.SignedString(secretKey)
-	if err != nil {
-		return "", err
-	}
-
-	return tokenString, nil
-}
-
-func verifyToken(tokenString string, username string) error {
-	secretKey := []byte("jiteshmc" + username)
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		return secretKey, nil
-	})
-
-	if err != nil {
-		return err
-	}
-
-	if !token.Valid {
-		return fmt.Errorf("invalid token")
-	}
-
-	return nil
-}
-
-// function to validate the db.user
-func validateCred(userToAuthorize db.User) interface{} {
-	var login db.UserLogin
-	data, err := database.FindOne("employees", bson.D{
-		{Key: "username", Value: userToAuthorize.Username},
-		{Key: "password", Value: userToAuthorize.Password}})
-	if err != nil {
-		login.Login = false
-		log.Fatal("Failed authentication. Error:- \n\t", err)
-		return login
-	}
-
-	var user db.User
-	err = bson.Unmarshal(data, &user)
-	if err != nil {
-		log.Fatal("Couldn't unwrap the user data recieved from mongoDB.\nError:-\n\n", err)
-	}
-
-	if user.Username == "" {
-		login.Login = false
-		return login
-	} else {
-		login.Username = user.Username
-		login.Login = true
-	}
-
-	return login
-}
-
 // handle `login`
-func handleLogin(w http.ResponseWriter, r *http.Request) {
+func HandleLogin(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "application/json")
 	var user db.User
 
@@ -111,16 +43,23 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 // handle `apply leaves`
-func handleApply(w http.ResponseWriter, r *http.Request) {
+func HandleApply(w http.ResponseWriter, r *http.Request) {
 	var leaveApplication db.Leaves
 	err := json.NewDecoder(r.Body).Decode(&leaveApplication)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	for index := range leaveApplication.Leaves {
-		leaveApplication.Leaves[index].Id = primitive.NewObjectID()
+
+	var splitLeaves []db.LeaveData
+	for _, leave := range leaveApplication.Leaves {
+		leaveSlices, err := utils.RemoveHolidayFromLeaveData(leave)
+		if err != nil {
+			log.Println("Could not remove the holidays from the leaves applied. Err : ", err)
+		}
+		splitLeaves = append(splitLeaves, leaveSlices...)
 	}
+	leaveApplication.Leaves = splitLeaves
 
 	result, err := database.UpdateOne("leaves", bson.D{
 		{Key: "username", Value: leaveApplication.Username},
@@ -150,7 +89,7 @@ func handleApply(w http.ResponseWriter, r *http.Request) {
 }
 
 // handle `view leaves`
-func handleViewLeaves(w http.ResponseWriter, r *http.Request) {
+func HandleViewLeaves(w http.ResponseWriter, r *http.Request) {
 	var user db.User
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
@@ -172,7 +111,7 @@ func handleViewLeaves(w http.ResponseWriter, r *http.Request) {
 }
 
 // hanlde `view leave applications`
-func handleViewLeaveApplications(w http.ResponseWriter, r *http.Request) {
+func HandleViewLeaveApplications(w http.ResponseWriter, r *http.Request) {
 	var approver db.User
 	err := json.NewDecoder(r.Body).Decode(&approver)
 	if err != nil {
@@ -194,7 +133,7 @@ func handleViewLeaveApplications(w http.ResponseWriter, r *http.Request) {
 }
 
 // handle `leaves approval`
-func handleLeaveApproval(w http.ResponseWriter, r *http.Request) {
+func HandleLeaveApproval(w http.ResponseWriter, r *http.Request) {
 	var leaveData db.Leaves
 	if err := json.NewDecoder(r.Body).Decode(&leaveData); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -222,20 +161,24 @@ func handleLeaveApproval(w http.ResponseWriter, r *http.Request) {
 
 }
 
-// MIDDLEWARES!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-func handleAuth(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Do stuff here
-		jwtToken := r.Header.Get("Authorization")
-		sessionId := r.Header.Get("Session-Id")
+func HandleViewHolidays(w http.ResponseWriter, r *http.Request) {
+	var holidayArgs db.HolidayArgs
+	if err := json.NewDecoder(r.Body).Decode(&holidayArgs); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
-		err := verifyToken(jwtToken, sessionId)
-		if err != nil {
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-
-		// Call the next handler, which can be another middleware in the chain, or the final handler.
-		next.ServeHTTP(w, r)
+	holidaysBson, err := database.Find("publicHolidays", bson.D{
+		{Key: "country.id", Value: holidayArgs.Country},
+		{Key: "date.datetime.year", Value: holidayArgs.Year},
 	})
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	holidays := utils.ReturnHolidays(holidaysBson)
+
+	serverRes, _ := json.MarshalIndent(holidays, "", "	")
+	w.Write(serverRes)
 }
