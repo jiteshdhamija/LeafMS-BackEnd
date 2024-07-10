@@ -20,7 +20,7 @@ type LeaveData struct {
 	Id       primitive.ObjectID `bson:"id" json:"id"`
 	Start    string             `bson:"startTime" json:"startTime"`
 	End      string             `bson:"endTime" json:"endTime"`
-	Approved bool               `bson:"approved" json:"approved"`
+	Approved bool               `default:"false" bson:"approved" json:"approved"`
 }
 
 type Leaves struct {

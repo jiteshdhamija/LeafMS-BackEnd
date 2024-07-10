@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"errors"
 	"log"
 	"strconv"
 
@@ -26,7 +25,7 @@ func ParseStringToDate(date string) (db.Datetime, error) {
 			parsedInt, err := strconv.Atoi(currParserVal)
 			if err != nil {
 				log.Println("Encountered error while parsing the date. Error:	", err)
-				return parsedDate, err
+				return db.Datetime{}, err
 			}
 
 			if valToInsert == Date {
@@ -43,14 +42,12 @@ func ParseStringToDate(date string) (db.Datetime, error) {
 	parsedInt, err := strconv.Atoi(currParserVal)
 	if err != nil {
 		log.Println("Encountered error while parsing the date. Error:	", err)
-		return parsedDate, err
+		return db.Datetime{}, err
 	}
 	parsedDate.Year = parsedInt
-	if parsedDate.Day > 31 || parsedDate.Month > 12 {
-		errStr := "The date provided is more than what is practically possible."
-		errStr += "For ex - the day of month is either 32nd day or the month is 13th, which is not possible."
-		err = errors.New(errStr)
-		return parsedDate, err
+
+	if err := FeasibleDate(parsedDate); err != nil {
+		return db.Datetime{}, err
 	}
 	return parsedDate, nil
 }
