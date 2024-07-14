@@ -3,7 +3,7 @@ package main
 import (
 	"net/http"
 
-	ctrlr "LeafMS-BackEnd/controller"
+	ctrlr "./"
 
 	"github.com/gorilla/mux"
 )
