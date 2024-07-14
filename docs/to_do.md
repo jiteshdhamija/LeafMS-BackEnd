@@ -26,7 +26,7 @@
 
     b) Create an API endpoint for it as well.
 
-    c) create only one collection for both public holdydas and weekends. Every holiday would have a special field names `isPublicHoloday`, which would be a bool value, and it would be set to true if it actually is a public holiday. SO, every weekend, that's not a public holdiay would have the `is PublicHoliday` set to `false`. ```YAYYYYYY!!!!!!!!!```
+    c) create only one collection for both public holdydas and weekends. Every holiday would have a special field names `isPublicHoloday`, which would be a bool value, and it would be set to tru,e if it actually is a public holiday. SO, every weekend, that's not a public holdiay would have the `is PublicHoliday` set to `false`. ```YAYYYYYY!!!!!!!!!```
 
 10) ## FRONTEND & BACKEND RESTRICTIONS!!
     a) already defined public holidays should be removed from the leave data time span, and shoul be split into list consisting of the broken leave spans(the list doesn't containt the public holidays.)
