@@ -18,8 +18,8 @@ type UserLogin struct {
 
 type LeaveData struct {
 	Id       primitive.ObjectID `bson:"id" json:"id"`
-	Start    string             `bson:"startTime" json:"startTime"`
-	End      string             `bson:"endTime" json:"endTime"`
+	Start    string             `bson:"startDate" json:"startDate"`
+	End      string             `bson:"endDate" json:"endDate"`
 	Approved bool               `default:"false" bson:"approved" json:"approved"`
 }
 
@@ -46,9 +46,9 @@ type Country struct {
 	Name string `bson:"name" json:"name"`
 }
 type Datetime struct {
-	Year  int `bson:"year" json:"year"`
-	Month int `bson:"month" json:"month"`
 	Day   int `bson:"day" json:"day"`
+	Month int `bson:"month" json:"month"`
+	Year  int `bson:"year" json:"year"`
 }
 type Date struct {
 	Iso      string   `bson:"iso" json:"iso"`
@@ -78,4 +78,24 @@ type HolidayArgs struct {
 	Country string `bson:"country" json :"country"`
 	Year    int    `bson:"year" json :"year"`
 	Month   int    `bson:"month" json:"month"`
+}
+
+func (date1 Datetime) IsGreaterThanOrEquals(date2 Datetime) bool {
+	if date1.Year > date2.Year {
+		return true
+	} else if date1.Year < date2.Year {
+		return false
+	}
+
+	if date1.Month > date2.Month {
+		return true
+	} else if date1.Month < date2.Month {
+		return false
+	}
+	if date1.Day > date2.Day {
+		return true
+	} else if date1.Day < date2.Day {
+		return false
+	}
+	return true
 }
