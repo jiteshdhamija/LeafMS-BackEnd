@@ -59,9 +59,21 @@ func HandleApply(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
+
 		splitLeaves = append(splitLeaves, leaveSlices...)
 	}
-	leaveApplication.Leaves = splitLeaves
+
+	var leavesLackingWeekend []db.LeaveData
+	for _, leave := range splitLeaves {
+		leaveSlices, err := utils.RemoveWeekendsFromLeaveData(leave)
+		if err != nil {
+			log.Println("There was an error while removing weekends from the applied leave. Err : ", err)
+		}
+
+		leavesLackingWeekend = append(leavesLackingWeekend, leaveSlices...)
+	}
+
+	leaveApplication.Leaves = leavesLackingWeekend
 
 	result, err := database.UpdateOne("leaves", bson.D{
 		{Key: "username", Value: leaveApplication.Username},
@@ -73,6 +85,7 @@ func HandleApply(w http.ResponseWriter, r *http.Request) {
 		}},
 	})
 	if err != nil {
+		log.Println("Encountered error while persisting applied leaves in Database. Err : ", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

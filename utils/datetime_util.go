@@ -24,7 +24,19 @@ var daysInMonth = map[int]int{
 	11: 30,
 	12: 31,
 }
+var WeekDays = map[int]string{
+	0: "Sunday",
+	1: "Monday",
+	2: "Tuesday",
+	3: "Wednesday",
+	4: "Thursday",
+	5: "Friday",
+	6: "Saturday",
+}
 
+// ================================
+// Helper Functions
+// ================================
 func isLeapYear(year int) bool {
 	if year%400 == 0 {
 		return true
@@ -40,7 +52,7 @@ func FeasibleDate(date db.Datetime) error {
 	year := date.Year
 
 	if month > 12 {
-		errStr := "The month provided is more than what is practically possible.\n"
+		errStr := "month provided is more than what is practically possible.\n"
 		errStr += "i.e - The month is 13th or more than 13th, which is not possible"
 		err := errors.New(errStr)
 		return err
@@ -52,27 +64,22 @@ func FeasibleDate(date db.Datetime) error {
 	return nil
 }
 
-// func (date1 db.Datetime) IsGreaterThan(date2 db.Datetime) bool {
-// 	if date1.Year > date2.Year {
-// 		return true
-// 	} else if date1.Year < date2.Year {
-// 		return false
-// 	}
+func DateToWeekday(date db.Datetime) (int, string) {
+	year := date.Year - 2000
+	year += (year / 4) + 7
 
-// 	if date1.Month > date2.Month {
-// 		return true
-// 	} else if date1.Month < date2.Month {
-// 		return false
-// 	}
-// 	if date1.Day > date2.Day {
-// 		return true
-// 	} else if date1.Day < date2.Day {
-// 		return false
-// 	}
-// 	return false
-// }
+	for i := 1; i < date.Month; i++ {
+		year += daysInMonth[i]
+	}
+	year += date.Day - 1
+	if isLeapYear(date.Year) && date.Month <= 2 {
+		year -= 1
+	}
+	year %= 7
+	return year, WeekDays[year]
+}
 
-func rollBackLeaveOneDay(date db.Datetime) db.Datetime {
+func rollLeaveBackwardOneDay(date db.Datetime) db.Datetime {
 	if date.Day == 1 {
 		if date.Month == 1 {
 			date.Year -= 1
@@ -90,7 +97,7 @@ func rollBackLeaveOneDay(date db.Datetime) db.Datetime {
 	return date
 }
 
-func rollForwardLeaveOneDay(date db.Datetime) db.Datetime {
+func rollLeaveForwardOneDay(date db.Datetime) db.Datetime {
 	if date.Day == daysInMonth[date.Month] ||
 		(date.Month == 2 && isLeapYear(date.Year) && date.Day == daysInMonth[date.Month]+1) {
 		date.Day = 1
@@ -106,26 +113,111 @@ func rollForwardLeaveOneDay(date db.Datetime) db.Datetime {
 	return date
 }
 
-func RemoveHolidayFromLeaveData(leave db.LeaveData) ([]db.LeaveData, error) {
+func rollLeaveBackward(date db.Datetime, daysBackward int) db.Datetime {
+	if date.Day-daysBackward <= 0 {
+		if date.Month == 1 {
+			date.Year -= 1
+			date.Month = 12
+		} else {
+			date.Month -= 1
+		}
+		date.Day = daysInMonth[date.Month] - (daysBackward - date.Day)
+		if date.Month == 2 && isLeapYear(date.Year) {
+			date.Day += 1
+		}
+	} else {
+		date.Day -= daysBackward
+	}
+	return date
+}
+
+func rollLeaveForward(date db.Datetime, daysForward int) db.Datetime {
+	if (date.Day+daysForward) > daysInMonth[date.Month] ||
+		(date.Month == 2 && isLeapYear(date.Year) && (date.Day+daysForward) > daysInMonth[date.Month]+1) {
+		date.Day = (date.Day + daysForward) - daysInMonth[date.Month]
+		if date.Month == 2 && isLeapYear(date.Year) && (date.Day+daysForward) > daysInMonth[date.Month]+1 {
+			date.Day -= 1
+		}
+		if date.Month == 12 {
+			date.Year += 1
+			date.Month = 1
+		} else {
+			date.Month += 1
+		}
+	} else {
+		date.Day += daysForward
+	}
+	return date
+}
+
+// ================================
+// Main Functions
+// ================================
+func RemoveWeekendsFromLeaveData(leavesSpan db.LeaveData) ([]db.LeaveData, error) {
 	var splitLeaves []db.LeaveData
+	leaveStartDate, err := ParseStringToDate(leavesSpan.Start)
+	if err != nil {
+		return nil, err
+	}
+	leaveEndDate, err := ParseStringToDate(leavesSpan.End)
+	if err != nil {
+		return nil, err
+	}
+
+	currentDate := leaveStartDate
+
+	weekdayInInt, _ := DateToWeekday(currentDate)
+	if weekdayInInt == 0 {
+		currentDate = rollLeaveForward(currentDate, 1)
+		weekdayInInt = 1
+	} else if weekdayInInt == 6 {
+		currentDate = rollLeaveForward(currentDate, 2)
+		weekdayInInt = 1
+	}
+
+	for leaveEndDate.IsGreaterThanOrEquals(currentDate) {
+		var leaveSpan db.LeaveData
+		if endDate := rollLeaveForward(currentDate, 5-weekdayInInt); leaveEndDate.IsGreaterThanOrEquals(endDate) {
+			leaveSpan = db.LeaveData{
+				Id:    primitive.NewObjectID(),
+				Start: ParseDateToString(currentDate),
+				End:   ParseDateToString(endDate),
+			}
+		} else {
+			leaveSpan = db.LeaveData{
+				Id:    primitive.NewObjectID(),
+				Start: ParseDateToString(currentDate),
+				End:   ParseDateToString(leaveEndDate),
+			}
+		}
+
+		splitLeaves = append(splitLeaves, leaveSpan)
+		currentDate = rollLeaveForward(currentDate, 8-weekdayInInt)
+		weekdayInInt = 1
+	}
+
+	return splitLeaves, nil
+}
+
+func FetchHolidays(leave db.LeaveData) ([]db.Holiday, error) {
 	leaveStartDate, err := ParseStringToDate(leave.Start)
 	if err != nil {
 		log.Println("There was problem parsing the starting date of a leave Err:", err)
-		return []db.LeaveData{}, err
+		return []db.Holiday{}, err
 	}
 	if err = FeasibleDate(leaveStartDate); err != nil {
 		log.Println("The start date is not practically possible in the real world. Err: ", err)
-		return []db.LeaveData{}, err
+		return []db.Holiday{}, err
 	}
 
 	leaveEndDate, err := ParseStringToDate(leave.End)
 	if err != nil {
 		log.Println("There was problem parsing the ending date of a leave Err:", err)
-		return []db.LeaveData{}, err
+		return []db.Holiday{}, err
 	}
 	if err = FeasibleDate(leaveEndDate); err != nil {
 		log.Println("The start date is not practically possible in the real world. Err: ", err)
-		return []db.LeaveData{}, err
+		return []db.Holiday{}, err
 	}
 
 	holidaysBson, err := database.Find("publicHolidays", bson.D{
@@ -148,10 +240,20 @@ func RemoveHolidayFromLeaveData(leave db.LeaveData) ([]db.LeaveData, error) {
 		errMessage := "For fuck's sake, there was a problem, "
 		errMessage += "while trying to find a holiday conflicting with the applied leave in the database. Err:"
 		log.Println(errMessage, err)
-		return []db.LeaveData{}, err
+		return []db.Holiday{}, err
 	}
 	holidays := ReturnHolidays(holidaysBson)
 	sort.Sort(Holidays(holidays))
+
+	return holidays, nil
+}
+
+func RemoveHolidayFromLeaveData(leave db.LeaveData) ([]db.LeaveData, error) {
+	var splitLeaves []db.LeaveData
+	holidays, err := FetchHolidays(leave)
+	if err != nil {
+		log.Println(err)
+	}
 
 	startDate := leave.Start
 	for _, holiday := range holidays {
@@ -160,11 +262,11 @@ func RemoveHolidayFromLeaveData(leave db.LeaveData) ([]db.LeaveData, error) {
 			leaveSpan := db.LeaveData{
 				Id:    primitive.NewObjectID(),
 				Start: startDate,
-				End:   ParseDateToString(rollBackLeaveOneDay(holiday.Date.Datetime)),
+				End:   ParseDateToString(rollLeaveBackwardOneDay(holiday.Date.Datetime)),
 			}
 			splitLeaves = append(splitLeaves, leaveSpan)
 		}
-		startDate = ParseDateToString(rollForwardLeaveOneDay(holiday.Date.Datetime))
+		startDate = ParseDateToString(rollLeaveForwardOneDay(holiday.Date.Datetime))
 	}
 
 	parsedStartDate, _ := ParseStringToDate(startDate)
